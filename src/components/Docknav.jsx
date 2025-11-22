@@ -11,7 +11,7 @@ const Docknav = () => {
 
   useGSAP(() => {
     const dock = docRef.current;
-    if (!dock) return;
+    if (!dock) return () => {};
 
     const icons = dock.querySelectorAll(".dock-icon");
 
