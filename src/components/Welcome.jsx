@@ -4,7 +4,7 @@ import React, { useRef } from "react";
 
 const FONT_WEIGHT_SETTINGS = {
   title: { min: 400, max: 800, default: 400 },
-  subtitle: { min: 100, max: 400, default: 100 },
+  subtitle: { min: 200, max: 500, default: 200 },
 };
 
 const renderText = ({ text, className, baseWeight = 400 }) => {
@@ -80,7 +80,7 @@ const Welcome = () => {
         {renderText({
           text: "Hey, I'm Harsh! Welcome to my",
           className: "text-3xl font-georama",
-          baseWeight: 100,
+          baseWeight: 200,
         })}
       </p>
       <h1 ref={titleRef} className="mt-7">
