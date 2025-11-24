@@ -32,10 +32,20 @@ const WindowWrapper = (Component, windowKey) => {
 
     // Helper to get dock icon center position
     const getDockIconCenter = () => {
+      // Use the dock icon for the current windowKey
+      // If the dock icon is not visible (e.g., for txtfile/imgfile), fallback to the first visible dock icon
       const dockName = windowKeyToDockName[windowKey] || windowKey;
-      const dockIcon = document.querySelector(
-        `.dock-icon[aria-label="${dockName}"]`
-      );
+      let dockIcon = document.querySelector(`.dock-icon[aria-label="${dockName}"]`);
+      if (!dockIcon || dockIcon.offsetParent === null) {
+        // Fallback: find the first visible dock icon
+        const allIcons = document.querySelectorAll('.dock-icon[aria-label]');
+        for (const icon of allIcons) {
+          if (icon.offsetParent !== null) {
+            dockIcon = icon;
+            break;
+          }
+        }
+      }
       if (!dockIcon) return null;
       const iconRect = dockIcon.getBoundingClientRect();
       return {
@@ -45,9 +55,18 @@ const WindowWrapper = (Component, windowKey) => {
     };
 
     // Helper to get window center position
-    const getWindowCenter = () => {
+    const getWindowCenter = (forMinimize = false) => {
       const element = ref.current;
       if (!element) return null;
+      // For Safari, only use center of viewport for open animation, not for minimize/close
+      if (windowKey === "safari" && !forMinimize) {
+        const vw = window.innerWidth;
+        const vh = window.innerHeight;
+        return {
+          x: vw / 2,
+          y: vh / 2,
+        };
+      }
       const winRect = element.getBoundingClientRect();
       return {
         x: winRect.left + winRect.width / 2,
@@ -77,37 +96,43 @@ const WindowWrapper = (Component, windowKey) => {
         setIsVisible(true);
         const element = ref.current;
         if (element) {
-          // Wait for the window to be rendered and positioned
+          // --- Fix: Hide window before animation to prevent layout jump ---
+          element.style.visibility = "hidden";
+          // Wait for next paint so the window is laid out in its final position
           requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-              const dockCenter = getDockIconCenter();
-              const winCenter = getWindowCenter();
-              let dx = 0,
-                dy = 200;
-              if (dockCenter && winCenter) {
-                dx = dockCenter.x - winCenter.x;
-                dy = dockCenter.y - winCenter.y;
-              }
-              gsap.fromTo(
-                element,
-                { scaleX: 0.05, scaleY: 0.7, x: dx, y: dy },
-                {
-                  scaleX: 1.08,
-                  scaleY: 1.04,
-                  x: 0,
-                  y: 0,
-                  duration: 0.32,
+            // Now show the window, but keep it at the dock position and scale
+            const dockCenter = getDockIconCenter();
+            const winCenter = getWindowCenter();
+            let dx = 0, dy = 200;
+            if (dockCenter && winCenter) {
+              dx = dockCenter.x - winCenter.x;
+              dy = dockCenter.y - winCenter.y;
+            }
+            // Set initial transform instantly, still hidden
+            gsap.set(element, { scaleX: 0.05, scaleY: 0.7, x: dx, y: dy });
+            // Now make visible and animate in
+            element.style.visibility = "visible";
+            gsap.to(element, {
+              scaleX: 1.08,
+              scaleY: 1.04,
+              x: 0,
+              y: 0,
+              duration: 0.32,
+              ease: "expo.out",
+              onUpdate: () => {
+                element.style.willChange = "transform";
+              },
+              onComplete: () => {
+                gsap.to(element, {
+                  scaleX: 1,
+                  scaleY: 1,
+                  duration: 0.12,
                   ease: "expo.out",
                   onComplete: () => {
-                    gsap.to(element, {
-                      scaleX: 1,
-                      scaleY: 1,
-                      duration: 0.12,
-                      ease: "expo.out",
-                    });
+                    element.style.willChange = "";
                   },
-                }
-              );
+                });
+              },
             });
           });
         }
@@ -121,22 +146,37 @@ const WindowWrapper = (Component, windowKey) => {
       if (((!isOpen && isClosing) || isMinimized) && isVisible) {
         const element = ref.current;
         if (element) {
+          // Get dock icon center and window rect
           const dockCenter = getDockIconCenter();
-          const winCenter = getWindowCenter();
-          let dx = 0,
-            dy = 200;
-          if (dockCenter && winCenter) {
-            dx = dockCenter.x - winCenter.x;
-            dy = dockCenter.y - winCenter.y;
+          const winRect = element.getBoundingClientRect();
+          // Calculate the current transform (if any) applied by Draggable
+          const computedStyle = window.getComputedStyle(element);
+          const matrix = computedStyle.transform !== 'none' ? computedStyle.transform : null;
+          let currentX = 0, currentY = 0;
+          if (matrix) {
+            const values = matrix.match(/matrix.*\((.+)\)/)[1].split(', ');
+            currentX = parseFloat(values[4]);
+            currentY = parseFloat(values[5]);
+          }
+          // Animate to dock icon: squeeze bottom of window into dock icon
+          let dx = 0, dy = 0;
+          if (dockCenter && winRect) {
+            dx = dockCenter.x - (winRect.left + winRect.width / 2) + currentX;
+            dy = dockCenter.y - (winRect.top + winRect.height) + currentY;
           }
           gsap.to(element, {
-            scaleX: 0.2,
-            scaleY: 0.7,
+            transformOrigin: "50% 100%", // bottom center
+            scaleX: 0.03, // more squeeze horizontally
+            scaleY: 0.01, // more squeeze vertically
             x: dx,
             y: dy,
-            duration: 0.4,
-            ease: "expo.in",
+            duration: 0.55,
+            ease: "expo.inOut",
+            onUpdate: () => {
+              element.style.willChange = "transform";
+            },
             onComplete: () => {
+              element.style.willChange = "";
               setIsVisible(false);
               if (isMinimized) {
                 useWindowStoreRef.current
@@ -155,24 +195,10 @@ const WindowWrapper = (Component, windowKey) => {
       }
     }, [isOpen, isMinimized, isVisible, isClosing]);
 
-    // useGSAP(() => {
-    //   const element = ref.current;
-    //   if (!element || !isOpen) return;
-    //   element.style.display = "block";
-
-    //   gsap.fromTo(
-    //     element,
-    //     { opacity: 0, scale: 0.95, y: 40 },
-    //     { opacity: 1, scale: 1, y: 0, duration: 5, ease: "power3.out" }
-    //   );
-    // }, [isOpen]);
-
     useGSAP(() => {
       const element = ref.current;
-    //   console.log("element", element);
       if (!element) return;
       const [instance] = Draggable.create(element, {
-        // type: "x,y",
         onPress: () => focusWindow(windowKey),
       });
 
@@ -180,27 +206,6 @@ const WindowWrapper = (Component, windowKey) => {
         if (instance) instance.kill();
       };
     }, []);
-
-    // useGSAP(() => {
-    //   const element = ref.current;
-    //   if (!element) return;
-    //   let instance = null;
-    //   // Make only the header (not the whole window) the drag handle
-    //   const header = element.querySelector("#window-header");
-    //   if (!isMaximized && header) {
-    //     gsap.set(element, { clearProps: "x,y" });
-    //     [instance] = Draggable.create(element, {
-    //       type: "x,y",
-    //       trigger: header, // Only drag from header
-    //       onPress: () => focusWindow(windowKey),
-    //       edgeResistance: 0.18,
-    //       inertia: true,
-    //     });
-    //   }
-    //   return () => {
-    //     if (instance) instance.kill();
-    //   };
-    // }, [isMaximized, isOpen]);
 
     useLayoutEffect(() => {
       const element = ref.current;
