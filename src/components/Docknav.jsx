@@ -6,7 +6,7 @@ import gsap from "gsap";
 import useWindowStore from "@/store/window";
 
 const Docknav = () => {
-    const {openWindow, closeWindow, focusWindow, windows} = useWindowStore();
+    const { openWindow, closeWindow, focusWindow, windows, restoreWindow } = useWindowStore();
   const docRef = React.useRef(null);
   
   useGSAP(() => {
@@ -62,16 +62,18 @@ const Docknav = () => {
     if (!app.canOpen) return;
 
     const window = windows[app.id];
-
     if (!window) return;
 
-    if (window.isOpen) {
+    if (window.isOpen && !window.isMinimized) {
       closeWindow(app.id);
     } else {
-      openWindow(app.id);
+      // If minimized, restore using the store action
+      if (window.isMinimized) {
+        restoreWindow(app.id);
+      } else {
+        openWindow(app.id);
+      }
     }
-
-    console.log(windows);
   };
 
   return (

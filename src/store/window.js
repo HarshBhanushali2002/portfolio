@@ -33,6 +33,40 @@ const useWindowStore = create(immer((set) => ({
         window.zIndex = state.nextZIndex++;
 
     }),
+
+    maximizeWindow: (windowKey) => set((state) => {
+        const window = state.windows[windowKey];
+        if (!window) return;
+        window.isMaximized = !window.isMaximized; // Toggle maximize
+        window.isMinimized = false; // Ensure not minimized
+        window.isOpen = true;
+        window.zIndex = state.nextZIndex++;
+    }),
+
+    minimizeWindow: (windowKey) => set((state) => {
+        const window = state.windows[windowKey];
+        if (!window) return;
+        window.isMinimized = true; // Mark as minimized
+        window.isOpen = true; // Keep open, just hidden
+        window.zIndex = INITIAL_Z_INDEX;
+        // Do NOT set isMaximized = false here; let animation finish first
+    }),
+
+    // Called after minimize animation completes
+    finalizeMinimize: (windowKey) => set((state) => {
+        const window = state.windows[windowKey];
+        if (!window) return;
+        window.isMaximized = false;
+    }),
+
+    restoreWindow: (windowKey) => set((state) => {
+        const window = state.windows[windowKey];
+        if (!window) return;
+        window.isMinimized = false;
+        window.isOpen = true;
+        window.isMaximized = false; // Always restore to original size
+        window.zIndex = state.nextZIndex++;
+    }),
 })))
 
 export default useWindowStore;
