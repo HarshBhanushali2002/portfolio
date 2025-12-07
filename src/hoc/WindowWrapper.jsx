@@ -26,8 +26,6 @@ const WindowWrapper = (Component, windowKey) => {
       terminal: "Skills",
       trash: "Archive",
       resume: "Resume",
-      txtfile: "Portfolio", // fallback or adjust as needed
-      imgfile: "Portfolio", // fallback or adjust as needed
     };
 
     // Helper to get dock icon center position
@@ -35,10 +33,48 @@ const WindowWrapper = (Component, windowKey) => {
       // Use the dock icon for the current windowKey
       // If the dock icon is not visible (e.g., for txtfile/imgfile), fallback to the first visible dock icon
       const dockName = windowKeyToDockName[windowKey] || windowKey;
-      let dockIcon = document.querySelector(`.dock-icon[aria-label="${dockName}"]`);
+      let dockIcon = document.querySelector(
+        `.dock-icon[aria-label="${dockName}"]`
+      );
       if (!dockIcon || dockIcon.offsetParent === null) {
         // Fallback: find the first visible dock icon
-        const allIcons = document.querySelectorAll('.dock-icon[aria-label]');
+        const allIcons = document.querySelectorAll(".dock-icon[aria-label]");
+        for (const icon of allIcons) {
+          if (icon.offsetParent !== null) {
+            dockIcon = icon;
+            break;
+          }
+        }
+      }
+      if (!dockIcon) return null;
+      const iconRect = dockIcon.getBoundingClientRect();
+      return {
+        x: iconRect.left + iconRect.width / 2,
+        y: iconRect.top + iconRect.height / 2,
+      };
+    };
+
+    // Helper to get the position from where the window should animate
+    const getAnimationStartPosition = () => {
+      const dockName = windowKeyToDockName[windowKey] || windowKey;
+
+      // First, try to find the navbar item (for windows opened from navbar)
+      const navItem = document.querySelector(`li[data-window="${windowKey}"]`);
+      if (navItem && navItem.offsetParent !== null) {
+        const rect = navItem.getBoundingClientRect();
+        return {
+          x: rect.left + rect.width / 2,
+          y: rect.top + rect.height / 2,
+        };
+      }
+
+      // Fall back to dock icon
+      let dockIcon = document.querySelector(
+        `.dock-icon[aria-label="${dockName}"]`
+      );
+      if (!dockIcon || dockIcon.offsetParent === null) {
+        // Fallback: find the first visible dock icon
+        const allIcons = document.querySelectorAll(".dock-icon[aria-label]");
         for (const icon of allIcons) {
           if (icon.offsetParent !== null) {
             dockIcon = icon;
@@ -98,18 +134,30 @@ const WindowWrapper = (Component, windowKey) => {
         if (element) {
           // --- Fix: Hide window before animation to prevent layout jump ---
           element.style.visibility = "hidden";
+
+          // CRITICAL FIX: Clear any existing transforms before animation
+          gsap.set(element, { clearProps: "all" });
+          element.style.visibility = "hidden"; // Reapply after clearProps
+
           // Wait for next paint so the window is laid out in its final position
           requestAnimationFrame(() => {
             // Now show the window, but keep it at the dock position and scale
-            const dockCenter = getDockIconCenter();
+            const dockCenter = getAnimationStartPosition();
             const winCenter = getWindowCenter();
-            let dx = 0, dy = 200;
+            let dx = 0,
+              dy = 200;
             if (dockCenter && winCenter) {
               dx = dockCenter.x - winCenter.x;
               dy = dockCenter.y - winCenter.y;
             }
             // Set initial transform instantly, still hidden
-            gsap.set(element, { scaleX: 0.05, scaleY: 0.7, x: dx, y: dy });
+            gsap.set(element, {
+              scaleX: 0.05,
+              scaleY: 0.7,
+              x: dx,
+              y: dy,
+              transformOrigin: "50% 50%",
+            });
             // Now make visible and animate in
             element.style.visibility = "visible";
             gsap.to(element, {
@@ -147,19 +195,22 @@ const WindowWrapper = (Component, windowKey) => {
         const element = ref.current;
         if (element) {
           // Get dock icon center and window rect
-          const dockCenter = getDockIconCenter();
+          const dockCenter = getAnimationStartPosition();
           const winRect = element.getBoundingClientRect();
           // Calculate the current transform (if any) applied by Draggable
           const computedStyle = window.getComputedStyle(element);
-          const matrix = computedStyle.transform !== 'none' ? computedStyle.transform : null;
-          let currentX = 0, currentY = 0;
+          const matrix =
+            computedStyle.transform !== "none" ? computedStyle.transform : null;
+          let currentX = 0,
+            currentY = 0;
           if (matrix) {
-            const values = matrix.match(/matrix.*\((.+)\)/)[1].split(', ');
+            const values = matrix.match(/matrix.*\((.+)\)/)[1].split(", ");
             currentX = parseFloat(values[4]);
             currentY = parseFloat(values[5]);
           }
           // Animate to dock icon: squeeze bottom of window into dock icon
-          let dx = 0, dy = 0;
+          let dx = 0,
+            dy = 0;
           if (dockCenter && winRect) {
             dx = dockCenter.x - (winRect.left + winRect.width / 2) + currentX;
             dy = dockCenter.y - (winRect.top + winRect.height) + currentY;

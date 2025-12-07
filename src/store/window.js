@@ -6,11 +6,16 @@ const useWindowStore = create(immer((set) => ({
     windows: WINDOW_CONFIG,
     nextZIndex: INITIAL_Z_INDEX + 1,
 
+
+
     openWindow: (windowKey, data = null) => set((state) => {
+        console.log("0", state.windows);
+        console.log(windowKey);
         const window = state.windows[windowKey];
         if (!window) return;
 
         window.isOpen = true;
+        window.isMinimized = false;
         window.data = data ?? window.data;
         window.zIndex = state.nextZIndex;
         state.nextZIndex += 1;
@@ -18,6 +23,7 @@ const useWindowStore = create(immer((set) => ({
     }),
 
     closeWindow: (windowKey) => set((state) => {
+        console.log("1", state.windows);
         const window = state.windows[windowKey];
         if (!window) return;
 
@@ -44,6 +50,7 @@ const useWindowStore = create(immer((set) => ({
     }),
 
     minimizeWindow: (windowKey) => set((state) => {
+        console.log("2", state.windows);
         const window = state.windows[windowKey];
         if (!window) return;
         window.isMinimized = true; // Mark as minimized
@@ -54,6 +61,7 @@ const useWindowStore = create(immer((set) => ({
 
     // Called after minimize animation completes
     finalizeMinimize: (windowKey) => set((state) => {
+        console.log("3", state.windows);
         const window = state.windows[windowKey];
         if (!window) return;
         window.isMaximized = false;
