@@ -1,9 +1,9 @@
 const navLinks = [
-    {
-        id: 1,
-        name: "Projects",
-        type: "finder",
-    },
+    // {
+    //     id: 1,
+    //     name: "Projects",
+    //     type: "finder",
+    // },
     {
         id: 3,
         name: "Contact",
@@ -66,12 +66,12 @@ const dockApps = [
         icon: "terminal.png",
         canOpen: true,
     },
-    {
-        id: "trash",
-        name: "Archive", // was "Trash"
-        icon: "trash.png",
-        canOpen: false,
-    },
+    // {
+    //     id: "trash",
+    //     name: "Archive", // was "Trash"
+    //     icon: "trash.png",
+    //     canOpen: false,
+    // },
 ];
 
 const blogPosts = [
@@ -499,8 +499,8 @@ const WINDOW_CONFIG = {
     safari: { isOpen: false, zIndex: INITIAL_Z_INDEX, data: null, isMaximized: false, isMinimized: false },
     photos: { isOpen: false, zIndex: INITIAL_Z_INDEX, data: null, isMaximized: false, isMinimized: false },
     terminal: { isOpen: false, zIndex: INITIAL_Z_INDEX, data: null, isMaximized: false, isMinimized: false },
-    txtfile: { isOpen: false, zIndex: INITIAL_Z_INDEX, data: null, isMaximized: false, isMinimized: false },
-    imgfile: { isOpen: false, zIndex: INITIAL_Z_INDEX, data: null, isMaximized: false, isMinimized: false },
+    txtfile: { isOpen: false, zIndex: INITIAL_Z_INDEX, data: null, isMaximized: false, isMinimized: false, instanceId: 0 },
+    imgfile: { isOpen: false, zIndex: INITIAL_Z_INDEX, data: null, isMaximized: false, isMinimized: false, instanceId: 0 },
 };
 
 export { INITIAL_Z_INDEX, WINDOW_CONFIG };

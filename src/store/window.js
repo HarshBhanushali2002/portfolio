@@ -6,18 +6,19 @@ const useWindowStore = create(immer((set) => ({
     windows: WINDOW_CONFIG,
     nextZIndex: INITIAL_Z_INDEX + 1,
 
-
-
     openWindow: (windowKey, data = null) => set((state) => {
-        console.log("0", state.windows);
-        console.log(windowKey);
-        const window = state.windows[windowKey];
-        if (!window) return;
+        const win = state.windows[windowKey];
+        if (!win) return;
 
-        window.isOpen = true;
-        window.isMinimized = false;
-        window.data = data ?? window.data;
-        window.zIndex = state.nextZIndex;
+        // For txtfile and imgfile, increment instanceId to force re-focus and zIndex update
+        if (["txtfile", "imgfile"].includes(windowKey)) {
+            win.instanceId = (win.instanceId || 0) + 1;
+        }
+
+        win.isOpen = true;
+        win.isMinimized = false;
+        win.data = data; // Always update data with the new argument
+        win.zIndex = state.nextZIndex;
         state.nextZIndex += 1;
 
     }),
