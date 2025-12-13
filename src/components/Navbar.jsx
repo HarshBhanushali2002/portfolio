@@ -13,7 +13,7 @@ const Navbar = () => {
 
         <ul>
           {navLinks.map(({ id, name, type }) => (
-            <li key={id} data-window={type} onClick={() => openWindow(type)}>
+            <li key={id} data-window={type} onClick={() => openWindow(type, type === "finder" ? { source: "navbar" } : undefined)}>
               <p>{name}</p>
             </li>
           ))}

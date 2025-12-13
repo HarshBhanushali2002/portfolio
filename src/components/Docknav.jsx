@@ -71,7 +71,7 @@ const Docknav = () => {
       if (window.isMinimized) {
         restoreWindow(app.id);
       } else {
-        openWindow(app.id);
+        openWindow(app.id, app.id === "finder" ? { source: "dock" } : undefined);
       }
     }
   };

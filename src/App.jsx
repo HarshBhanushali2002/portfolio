@@ -8,7 +8,8 @@ import gsap from "gsap";
 import Terminal from "./windows/Terminal";
 import Safari from "./windows/Safari";
 import Portfolio from "./windows/Resume";
-
+import Finder from "./windows/Finder";
+import { Text, ImageViewer } from "./windows";
 
 gsap.registerPlugin(Draggable);
 
@@ -23,6 +24,10 @@ const App = () => {
       <Terminal />
       <Safari />
       <Portfolio />
+
+      <Finder />
+      <Text />
+      <ImageViewer />
     </main>
   );
 };

@@ -250,11 +250,22 @@ const WindowWrapper = (Component, windowKey) => {
       const element = ref.current;
       if (!element) return;
       const [instance] = Draggable.create(element, {
-        onPress: () => focusWindow(windowKey),
+        onPress: () => {
+          // Always bring to front on click/drag
+          focusWindow(windowKey);
+        },
       });
+
+      // Also bring to front on click (not just drag)
+      const handleClick = (e) => {
+        // Only focus if not right-click
+        if (e.button === 0) focusWindow(windowKey);
+      };
+      element.addEventListener("mousedown", handleClick);
 
       return () => {
         if (instance) instance.kill();
+        element.removeEventListener("mousedown", handleClick);
       };
     }, []);
 
