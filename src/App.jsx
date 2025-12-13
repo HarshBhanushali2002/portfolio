@@ -10,6 +10,7 @@ import Safari from "./windows/Safari";
 import Portfolio from "./windows/Resume";
 import Finder from "./windows/Finder";
 import { Text, ImageViewer } from "./windows";
+import Contact from "./windows/Contact";
 
 gsap.registerPlugin(Draggable);
 
@@ -28,6 +29,7 @@ const App = () => {
       <Finder />
       <Text />
       <ImageViewer />
+      <Contact />
     </main>
   );
 };
