@@ -11,6 +11,8 @@ import Portfolio from "./windows/Resume";
 import Finder from "./windows/Finder";
 import { Text, ImageViewer } from "./windows";
 import Contact from "./windows/Contact";
+import Home from "./components/Home";
+import Photos from "./windows/Photos";
 
 gsap.registerPlugin(Draggable);
 
@@ -30,6 +32,9 @@ const App = () => {
       <Text />
       <ImageViewer />
       <Contact />
+      <Photos/>
+
+      <Home/>
     </main>
   );
 };

@@ -21,11 +21,13 @@ const WindowWrapper = (Component, windowKey) => {
     const windowKeyToDockName = {
       finder: "Portfolio",
       safari: "Articles",
-      photos: "Gallery",
+      photos: "Gallery", // Ensure this matches the dock icon label
       contact: "Contact",
       terminal: "Skills",
       trash: "Archive",
       resume: "Resume",
+      txtfile: "",
+      imgfile: "",
     };
 
     // Helper to get dock icon center position
@@ -57,6 +59,30 @@ const WindowWrapper = (Component, windowKey) => {
     // Helper to get the position from where the window should animate
     const getAnimationStartPosition = () => {
       const dockName = windowKeyToDockName[windowKey] || windowKey;
+
+      // For photos window, always use dock icon (not navbar)
+      if (windowKey === "photos") {
+        // Always use the dock icon, never the navbar
+        let dockIcon = document.querySelector(
+          '.dock-icon[aria-label="Gallery"]'
+        );
+        if (!dockIcon || dockIcon.offsetParent === null) {
+          // Fallback: find the first visible dock icon
+          const allIcons = document.querySelectorAll('.dock-icon[aria-label]');
+          for (const icon of allIcons) {
+            if (icon.offsetParent !== null && icon.getAttribute('aria-label') === 'Gallery') {
+              dockIcon = icon;
+              break;
+            }
+          }
+        }
+        if (!dockIcon) return null;
+        const iconRect = dockIcon.getBoundingClientRect();
+        return {
+          x: iconRect.left + iconRect.width / 2,
+          y: iconRect.top + iconRect.height / 2,
+        };
+      }
 
       // First, try to find the navbar item (for windows opened from navbar)
       const navItem = document.querySelector(`li[data-window="${windowKey}"]`);
